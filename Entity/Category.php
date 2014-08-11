@@ -65,6 +65,11 @@ class Category
      */
     protected $name;
 
+    /**
+     * @ORM\Column(name="hash_name", length=50, unique=true)
+     */
+    protected $hashName;
+    
     public function __construct()
     {
         $this->subjects = new ArrayCollection;
@@ -109,6 +114,10 @@ class Category
     {
         $this->name = $name;
     }
+    
+    /*
+    *   Need for the synchronisation
+    */    
 
     public function setCreationDate($date)
     {
@@ -118,6 +127,26 @@ class Category
     public function setModificationDate($date)
     {
         $this->modificationDate = $date;
+    }
+
+    /**
+     * Returns the hashname of the category.
+     *
+     * @return string
+     */
+    public function getHashName()
+    {
+        return $this->hashName;
+    }
+
+    /**
+     * Sets the hashname of the category.
+     *
+     * @param string $hashName
+     */
+    public function setHashName($hashName)
+    {
+        $this->hashName = $hashName;
     }
 
     public function getCreationDate()

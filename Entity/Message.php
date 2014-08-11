@@ -66,7 +66,12 @@ class Message
      * @ORM\JoinColumn(name="user_id")
      */
     protected $creator;
-
+    
+     /**
+     * @ORM\Column(name="hash_name", length=50, unique=true)
+     */
+    protected $hashName;
+    
     /**
      * Returns the resource id.
      *
@@ -116,12 +121,36 @@ class Message
     {
         return $this->creationDate;
     }
+    
+    /*
+    *   Need for the synchronisation
+    */
 
     public function setCreationDate($date)
     {
         $this->creationDate = $date;
     }
+    
+    /**
+     * Returns the hashname of the message.
+     *
+     * @return string
+     */
+    public function getHashName()
+    {
+        return $this->hashName;
+    }
 
+    /**
+     * Sets the hashname of the message.
+     *
+     * @param string $hashName
+     */
+    public function setHashName($hashName)
+    {
+        $this->hashName = $hashName;
+    }
+    
     public function setModificationDate($date)
     {
         $this->updated = $date;

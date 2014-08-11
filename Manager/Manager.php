@@ -35,6 +35,7 @@ use Claroline\ForumBundle\Event\Log\MoveSubjectEvent;
 use Claroline\ForumBundle\Event\Log\EditMessageEvent;
 use Claroline\ForumBundle\Event\Log\EditCategoryEvent;
 use Claroline\ForumBundle\Event\Log\EditSubjectEvent;
+use Claroline\CoreBundle\Library\Utilities\ClaroUtilities;
 use Claroline\ForumBundle\Event\Log\CloseSubjectEvent;
 use Claroline\ForumBundle\Event\Log\OpenSubjectEvent;
 use Claroline\CoreBundle\Persistence\ObjectManager;
@@ -65,6 +66,7 @@ class Manager
     private $router;
     private $mailManager;
     private $container;
+    private $ut;
     private $sc;
 
     /**
@@ -79,6 +81,7 @@ class Manager
      *     "router"         = @DI\Inject("router"),
      *     "mailManager"    = @DI\Inject("claroline.manager.mail_manager"),
      *     "container"      = @DI\Inject("service_container"),
+     *     "ut"            = @DI\Inject("claroline.utilities.misc"),
      *     "sc"           = @DI\Inject("security.context")
      * })
      */
@@ -91,6 +94,7 @@ class Manager
         RouterInterface $router,
         MailManager $mailManager,
         ContainerInterface $container,
+        ClaroUtilities $ut,
         SecurityContextInterface $sc
     )
     {
@@ -107,6 +111,7 @@ class Manager
         $this->router = $router;
         $this->mailManager = $mailManager;
         $this->container = $container;
+        $this->ut = $ut;
         $this->sc = $sc;
     }
 
@@ -152,12 +157,17 @@ class Manager
      *
      * @return \Claroline\ForumBundle\Entity\Category
      */
-    public function createCategory(Forum $forum, $name, $autolog = true)
+    public function createCategory(Forum $forum, $name, $autolog = true, $hashname = null)
     {
         $this->om->startFlushSuite();
         $category = new Category();
         $category->setName($name);
         $category->setForum($forum);
+        // Generate a hashname if none exists.
+        if($hashname == null){
+            $hashname = $this->ut->generateGuid();
+        }
+        $category->setHashName($hashname);
         $this->om->persist($category);
 
         //required for the default category
@@ -191,7 +201,7 @@ class Manager
      * @throws \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException
      * @return \Claroline\ForumBundle\Entity\Message
      */
-    public function createMessage(Message $message, Subject $subject)
+    public function createMessage(Message $message, Subject $subject, $hashname = null)
     {
     	$forum = $subject->getCategory()->getForum();
         $collection = new ResourceCollection(array($forum->getResourceNode()));
@@ -200,6 +210,11 @@ class Manager
             throw new AccessDeniedHttpException($collection->getErrorsForDisplay());
         }
 
+        // Generate a hashname if none exists.
+        if($hashname == null){
+            $hashname = $this->ut->generateGuid();
+        }
+        $message->setHashName($hashname);
      	$user = $this->sc->getToken()->getUser();
         $message->setCreator($user);
         $message->setSubject($subject);
@@ -238,10 +253,16 @@ class Manager
      *
      * @return \Claroline\ForumBundle\Entity\Subject $subject
      */
-    public function createSubject(Subject $subject)
+    public function createSubject(Subject $subject, $hashname = null)
     {
         $this->om->startFlushSuite();
+        // Generate a hashname if none exists.
+        if($hashname == null){
+            $hashname = $this->ut->generateGuid();
+        }
+        $subject->setHashName($hashname);
         $this->om->persist($subject);
+
         $this->dispatch(new CreateSubjectEvent($subject));
         $this->om->endFlushSuite();
 
